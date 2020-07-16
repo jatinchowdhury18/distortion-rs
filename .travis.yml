@@ -15,8 +15,11 @@ matrix:
 
 install:
   - cargo install --force cbindgen
+  - if [[ $TRAVIS_OS_NAME == 'windows' ]]; then rustup default stable-i686-pc-windows-msvc; fi
 
 script:
   - cmake --version
   - cmake -Bbuild
   - cmake --build build --config Release
+
+cache: cargo
