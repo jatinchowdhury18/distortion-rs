@@ -44,5 +44,8 @@ target_link_libraries(ChowDistortionRust PRIVATE
     juce::juce_audio_utils
     foleys_gui_magic
     distortionlib
-    userenv
     )
+
+if(WIN32)
+    target_link_libraries(ChowDistortionRust PRIVATE userenv)
+endif()
