@@ -1,0 +1,22 @@
+notifications:
+  email: false
+
+language: rust
+
+# if pull request: always build
+# if push: only build for master branch
+if: (type != push) OR (type = push AND branch = master)
+
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode10.3
+    - os: windows
+
+install:
+  - cargo install --force cbindgen
+
+script:
+  - cmake --version
+  - cmake -Bbuild
+  - cmake --build build --config Release
