@@ -1,0 +1,8 @@
+# CMake build artifacts
+build*/
+
+# Rust build artifacts
+target/
+
+# vscode settings
+.vscode/
