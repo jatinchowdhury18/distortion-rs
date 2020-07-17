@@ -3,6 +3,11 @@ pub fn db_2_gain(gain_db: f32) -> f32 {
     if gain_db > -100.0 { 10.0f32.powf(gain_db * 0.05) } else { 0.0 }
 }
 
+// convert from linear gain to dB
+pub fn gain_2_db(gain: f32) -> f32 {
+    if gain > 0.0 { 20.0 * gain.log10() } else { -100.0 }
+}
+
 // map from 0-1 range to given range
 pub fn jmap01(value01: f32, min: f32, max: f32) -> f32 {
     min + value01 * (max - min)
@@ -39,6 +44,26 @@ mod tests {
         assert_approx_eq!(should_be_one, 1.0, TOL);
         assert_approx_eq!(should_be_half, 0.5, TOL);
         assert_approx_eq!(should_be_two, 2.0, TOL);
+    }
+
+    #[test]
+    fn test_gain_2_db() {
+        const TOL: f32 = 0.05;
+
+        let neg_test = gain_2_db(-1.0);
+        assert_approx_eq!(neg_test, -100.0);
+
+        let zero_test = gain_2_db(0.0);
+        assert_approx_eq!(zero_test, -100.0);
+
+        let unity_test = gain_2_db(1.0);
+        assert_approx_eq!(unity_test, 0.0);
+
+        let minus_6 = gain_2_db(0.5);
+        assert_approx_eq!(minus_6, -6.0, TOL);
+
+        let plus_6 = gain_2_db(2.0);
+        assert_approx_eq!(plus_6, 6.0, TOL);
     }
 
     #[test]

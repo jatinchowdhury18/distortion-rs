@@ -10,8 +10,6 @@ pub struct Filter {
 // A lowpass filter based loosely on Tim Stilson and Julius Smith's
 // Moog VCF model (https://ccrma.stanford.edu/~stilti/papers/moogvcf.pdf)
 impl Filter {
-    const SQRT2: f32 = 1.414427157;
-
     pub fn new(sr: usize) -> Self {
         Filter {
             fs: sr as f32,
@@ -30,6 +28,8 @@ impl Filter {
 
     #[inline(always)]
     fn process_sample(&mut self, x: f32) -> f32 {
+        const MAKEUP: f32 = 5.0 / std::f32::consts::SQRT_2;
+
         let mut x = x - self.outputs[3] * self.fb;
         x *= 0.35013 * self.wc.powi(4);
 
@@ -38,7 +38,7 @@ impl Filter {
         Filter::process_pole(self.outputs[1], &mut self.inputs[2], &mut self.outputs[2], self.wc);
         Filter::process_pole(self.outputs[2], &mut self.inputs[3], &mut self.outputs[3], self.wc);
 
-        self.outputs[3] * Filter::SQRT2
+        self.outputs[3] * MAKEUP
     }
 
     pub fn process_block(&mut self, block: &mut [f32]) {
@@ -59,4 +59,49 @@ impl Filter {
     }
 }
 
-// @TODO write tests...
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_approx_eq::assert_approx_eq;
+    use crate::utils;
+
+    fn create_sine(freq: f32, num_samples: usize, fs: f32) -> Vec<f32> {
+        // TODO: use a generator instead??
+
+        let mut sine: Vec<f32> = vec![0.0; num_samples];
+        for n in 0..num_samples {
+            sine[n] = (2.0 * std::f32::consts::PI * freq * (n as f32) / fs).sin();
+        }
+
+        sine
+    }
+
+    fn get_rms_level(signal: &[f32]) -> f32 {
+        let square_sum: f32 = signal.iter().map(|&x: &f32| x * x).sum();
+
+        (square_sum / signal.len() as f32).sqrt()
+    }
+
+    #[test]
+    fn test_filter_apply() {
+        const FS: f32 = 44100.0;
+        const N: usize = 8192;
+
+        let mut filter = Filter::new(FS as usize);
+        filter.set_freq(1000.0);
+        filter.set_resonance(0.7071);
+
+        let mut sine_10 = create_sine(10.0, N, FS);
+        let mut sine_2k = create_sine(2000.0, N, FS);
+
+        filter.process_block(&mut sine_10);
+        filter.process_block(&mut sine_2k);
+
+        let rms_10_db = utils::gain_2_db(get_rms_level(&sine_10));
+        let rms_2k_db = utils::gain_2_db(get_rms_level(&sine_2k));
+
+        const TOL: f32 = 1.0;
+        assert_approx_eq!(rms_10_db, -3.0, TOL);
+        assert_approx_eq!(rms_2k_db, -24.0, TOL);
+    }
+}
