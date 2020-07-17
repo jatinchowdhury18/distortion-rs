@@ -18,6 +18,11 @@ public:
     void processBlock (AudioBuffer<float>& buffer) override;
 
 private:
+    std::atomic<float>* gainDBParam = nullptr;
+    std::atomic<float>* freqHzParam = nullptr;
+    std::atomic<float>* qParam = nullptr;
+    std::atomic<float>* driveParam = nullptr;
+
     std::unique_ptr<distortion::Distortion, decltype(&distortion::destroy)> distProc[2] {{nullptr, &distortion::destroy}, {nullptr, &distortion::destroy}};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChowDistortion)

@@ -14,12 +14,20 @@ matrix:
     - os: windows
 
 install:
-  - cargo install --force cbindgen
+  - cargo install cbindgen
   - if [[ $TRAVIS_OS_NAME == 'windows' ]]; then rustup default stable-i686-pc-windows-msvc; fi
 
 script:
+  - echo "Testing Rust code..."
+  - cd distortionlib
+  - cargo test
+
+  - echo "Building plugin..."
+  - cd $TRAVIS_BUILD_DIR
   - cmake --version
   - cmake -Bbuild
   - cmake --build build --config Release
+
+  - echo "SUCCESS"
 
 cache: cargo
